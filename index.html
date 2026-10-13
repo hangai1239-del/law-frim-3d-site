@@ -1170,10 +1170,14 @@
 
   <!-- ========== CALENDAR JAVASCRIPT ========== -->
   <script>
-    // Live Server previews the page without requiring the booking backend.
-    const isStaticPreview = location.protocol === 'file:' ||
-      (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) && location.port !== '4000');
-    const bookingApiBase = isStaticPreview ? 'http://localhost:4000' : '';
+    // GitHub Pages is static, so production bookings use the deployed Apps Script API.
+    const appsScriptApi = 'https://script.google.com/macros/s/AKfycbywdudD_uH6CHE1fzVdG7CxFjrapTo6VUkOBZqR0KLh6KMkZsB85V9uqNfkIy6IktBFTQ/exec';
+    const useLocalBookingApi = location.protocol === 'file:' ||
+      ['localhost', '127.0.0.1', '[::1]'].includes(location.hostname);
+    const availabilityUrl = date => useLocalBookingApi
+      ? `http://localhost:4000/api/availability?date=${encodeURIComponent(date)}`
+      : `${appsScriptApi}?action=availability&date=${encodeURIComponent(date)}`;
+    const bookingUrl = useLocalBookingApi ? 'http://localhost:4000/api/bookings' : appsScriptApi;
 
     // --- Calendar State ---
     let currentDate = new Date();
@@ -1301,7 +1305,7 @@
       document.getElementById('bookingConfirmation').classList.remove('active');
       renderCalendar();
       try {
-        const response = await fetch(`${bookingApiBase}/api/availability?date=${encodeURIComponent(dateStr)}`);
+        const response = await fetch(availabilityUrl(dateStr));
         if (!response.ok) throw new Error();
         const data = await response.json();
         if (!Array.isArray(data.bookedTimes) || !data.bookedTimes.every(time => typeof time === 'string')) throw new Error();
@@ -1418,14 +1422,15 @@
       errorBox.textContent = '';
 
       try {
-        const response = await fetch(`${bookingApiBase}/api/bookings`, {
+        const response = await fetch(bookingUrl, {
           method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
+          // text/plain keeps the cross-origin Apps Script request "simple" (no CORS preflight).
+          headers: { 'Content-Type': useLocalBookingApi ? 'application/json' : 'text/plain;charset=utf-8' },
           body: JSON.stringify(bookingInfo),
         });
         const data = await response.json();
-        if (!response.ok) {
-          if (response.status === 409) {
+        if (!response.ok || data.error) {
+          if (response.status === 409 || data.code === 'SLOT_TAKEN') {
             await selectDate(bookingInfo.date);
             document.getElementById('bookingForm').classList.add('active');
           }
