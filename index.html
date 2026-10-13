@@ -1,0 +1,1453 @@
+<!DOCTYPE html>
+<html lang="mn">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <link rel="icon" href="title_logo.png" type="image/png" />
+  <title>Өмгөөллийн Сентрал Консалтинг | 3D зураг: Шударга ёсны бэлгэ тэмдэг</title>
+  <style>
+    /* ---------- RESET & BASE ---------- */
+    * {
+      margin: 0;
+      padding: 0;
+      box-sizing: border-box;
+    }
+
+    html {
+      scroll-behavior: smooth;
+    }
+
+    body {
+      background: #0a0a0a;
+      color: #e0dcd5;
+      font-family: 'Times New Roman', serif;
+      overflow-x: hidden;
+    }
+
+    /* ---------- FIXED 3D CANVAS ---------- */
+    #three-canvas {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100vw;
+      height: 100vh;
+      z-index: 0;
+      display: block;
+    }
+
+    /* ---------- SCROLL SPACER (triggers scroll) ---------- */
+    .scroll-spacer {
+      height: 600vh;
+      width: 100%;
+      position: relative;
+      z-index: 1;
+      pointer-events: none;
+    }
+
+    /* ---------- OVERLAY CONTENT ---------- */
+    .content-overlay {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: 2;
+      pointer-events: none;
+      display: flex;
+      flex-direction: column;
+      justify-content: space-between;
+      padding: 2rem 3rem;
+    }
+
+    /* ----- TOP BAR (logo + nav) ----- */
+    .top-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      pointer-events: auto;
+      padding: 0.5rem 0;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.15);
+    }
+
+    .logo {
+      font-size: 1.1rem;
+      font-weight: 300;
+      letter-spacing: 6px;
+      color: #d4af37;
+      text-transform: uppercase;
+    }
+
+    .logo span {
+      font-weight: 700;
+      color: #fff;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 1.2rem;
+      list-style: none;
+      font-size: 0.8rem;
+      letter-spacing: 2px;
+      text-transform: uppercase;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .nav-links li {
+      padding: 0.45rem 0.8rem;
+      border-radius: 999px;
+      background: rgba(255, 255, 255, 0.04);
+      border: 1px solid rgba(212, 175, 55, 0.16);
+      transition: all 0.3s ease;
+      cursor: pointer;
+      font-weight: 600;
+      text-shadow: 0 0 12px rgba(212, 175, 55, 0.1);
+    }
+
+    .nav-links li:hover {
+      color: #fff;
+      background: rgba(212, 175, 55, 0.18);
+      border-color: #d4af37;
+      transform: translateY(-1px);
+      box-shadow: 0 6px 18px rgba(212, 175, 55, 0.16);
+    }
+
+    /* ----- HERO (centered) ----- */
+    .hero-center {
+      position: absolute;
+      top: 50%;
+      left: 50%;
+      transform: translate(-50%, -50%);
+      text-align: center;
+      pointer-events: none;
+      width: 90%;
+      max-width: 900px;
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .hero-center.fade-out {
+      opacity: 0;
+      transform: translate(-50%, -60%);
+    }
+
+    .hero-center .subtitle-top {
+      font-size: 0.8rem;
+      letter-spacing: 8px;
+      color: #d4af37;
+      text-transform: uppercase;
+      margin-bottom: 1rem;
+      opacity: 0.7;
+    }
+
+    .hero-center h1 {
+      font-size: clamp(3rem, 10vw, 7rem);
+      font-weight: 300;
+      letter-spacing: 8px;
+      color: #fff;
+      text-shadow: 0 0 60px rgba(212, 175, 55, 0.15);
+      line-height: 1.1;
+    }
+
+    .hero-center h1 em {
+      color: #d4af37;
+      font-style: normal;
+    }
+
+    .hero-center .tagline {
+      font-size: 1.1rem;
+      letter-spacing: 4px;
+      color: rgba(255, 255, 255, 0.5);
+      margin-top: 1.2rem;
+      font-weight: 300;
+    }
+
+    .hero-center .model-title {
+      font-size: 0.9rem;
+      letter-spacing: 3px;
+      color: rgba(255, 255, 255, 0.65);
+      text-transform: uppercase;
+      margin-top: 1rem;
+      opacity: 0.9;
+    }
+
+    .hero-center .divider {
+      width: 60px;
+      height: 2px;
+      background: #d4af37;
+      margin: 1.5rem auto 0;
+      opacity: 0.5;
+    }
+
+    /* ----- SCROLL STORY SECTIONS (floating text) ----- */
+    .story-sections {
+      position: absolute;
+      bottom: 12%;
+      left: 10%;
+      pointer-events: none;
+      max-width: 420px;
+      transition: opacity 0.8s ease, transform 0.8s ease;
+    }
+
+    .story-sections.fade-out {
+      opacity: 0;
+      transform: translateY(30px);
+      pointer-events: none;
+    }
+
+    .story-item {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: opacity 0.8s ease, transform 0.8s ease;
+      margin-bottom: 2.5rem;
+      border-left: 2px solid rgba(212, 175, 55, 0.2);
+      padding-left: 1.5rem;
+      position: relative;
+    }
+
+    .story-item.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    .story-item .label {
+      font-size: 0.65rem;
+      letter-spacing: 4px;
+      color: #d4af37;
+      text-transform: uppercase;
+      opacity: 0.6;
+    }
+
+    .story-item h2 {
+      font-size: 2rem;
+      font-weight: 300;
+      letter-spacing: 2px;
+      color: #fff;
+      margin: 0.3rem 0 0.2rem;
+    }
+
+    .story-item p {
+      font-size: 0.9rem;
+      color: rgba(255, 255, 255, 0.45);
+      line-height: 1.6;
+      max-width: 300px;
+    }
+
+    /* ----- SCROLL INDICATOR ----- */
+    .scroll-indicator {
+      position: absolute;
+      bottom: 2rem;
+      right: 3rem;
+      color: rgba(255, 255, 255, 0.12);
+      font-size: 0.65rem;
+      letter-spacing: 3px;
+      text-transform: uppercase;
+      pointer-events: none;
+      writing-mode: vertical-rl;
+      font-weight: 300;
+      transition: opacity 0.8s ease;
+    }
+
+    .scroll-indicator.fade-out {
+      opacity: 0;
+    }
+
+    .scroll-indicator::after {
+      content: '';
+      display: block;
+      width: 1px;
+      height: 40px;
+      background: rgba(255, 255, 255, 0.08);
+      margin: 0.5rem auto 0;
+    }
+
+    /* ----- BOTTOM BAR (gold line) ----- */
+    .bottom-bar {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-end;
+      pointer-events: none;
+      border-top: 1px solid rgba(212, 175, 55, 0.08);
+      padding-top: 1.2rem;
+      font-size: 0.7rem;
+      letter-spacing: 1px;
+      color: rgba(255, 255, 255, 0.15);
+      transition: opacity 0.8s ease;
+    }
+
+    .bottom-bar .gold {
+      color: #d4af37;
+      opacity: 0.4;
+    }
+
+    /* ========== CONTENT SECTIONS (scrollable) ========== */
+    .content-sections {
+      position: relative;
+      z-index: 1;
+      margin-top: 120vh;
+      padding: 4rem 3rem;
+      background: #0a0a0a;
+      min-height: 100vh;
+    }
+
+    .section {
+      max-width: 900px;
+      margin: 0 auto 6rem auto;
+      padding: 3rem 2rem;
+      border-left: 3px solid rgba(212, 175, 55, 0.2);
+      padding-left: 3rem;
+      opacity: 0;
+      transform: translateY(40px);
+      animation: fadeInUp 0.8s ease forwards;
+    }
+
+    .section:nth-child(1) { animation-delay: 0.1s; }
+    .section:nth-child(2) { animation-delay: 0.3s; }
+    .section:nth-child(3) { animation-delay: 0.5s; }
+    .section:nth-child(4) { animation-delay: 0.7s; }
+
+    @keyframes fadeInUp {
+      to {
+        opacity: 1;
+        transform: translateY(0);
+      }
+    }
+
+    .section .section-number {
+      font-size: 0.7rem;
+      letter-spacing: 4px;
+      color: #d4af37;
+      text-transform: uppercase;
+      opacity: 0.5;
+      margin-bottom: 0.5rem;
+    }
+
+    .section h2 {
+      font-size: 2.8rem;
+      font-weight: 300;
+      letter-spacing: 3px;
+      color: #fff;
+      margin-bottom: 1.5rem;
+    }
+
+    .section h2 .gold {
+      color: #d4af37;
+    }
+
+    .section .content-placeholder {
+      font-size: clamp(1.3rem, 1.1rem + 0.5vw, 1.5rem);
+      line-height: 1.8;
+      color: #dedede;
+      padding: 2rem;
+      background: rgba(212, 175, 55, 0.03);
+      border-radius: 4px;
+      border: 1px dashed rgba(212, 175, 55, 0.1);
+      font-family: 'Times New Roman', Times, serif;
+      letter-spacing: 0.2px;
+    }
+
+    .section .content-placeholder .highlight {
+      color: inherit;
+    }
+
+    .location-card {
+      overflow: hidden;
+      border: 1px solid rgba(212, 175, 55, 0.22);
+      border-radius: 12px;
+      background: linear-gradient(145deg, rgba(212, 175, 55, 0.08), rgba(255, 255, 255, 0.02));
+      box-shadow: 0 18px 50px rgba(0, 0, 0, 0.28);
+    }
+
+    .location-info {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 2rem;
+      padding: 1.7rem 1.8rem;
+    }
+
+    .location-copy {
+      display: flex;
+      align-items: flex-start;
+      gap: 1rem;
+    }
+
+    .map-pin {
+      flex: 0 0 auto;
+      width: 36px;
+      height: 48px;
+      object-fit: contain;
+      filter: drop-shadow(0 5px 10px rgba(0, 0, 0, 0.35));
+    }
+
+    .location-label {
+      margin-bottom: 0.4rem;
+      color: #d4af37;
+      font-size: 0.68rem;
+      font-family: Arial, sans-serif;
+      font-weight: 700;
+      letter-spacing: 2.5px;
+      text-transform: uppercase;
+    }
+
+    .location-address {
+      max-width: 540px;
+      color: #f3f0ea;
+      font-size: 1.05rem;
+      line-height: 1.55;
+    }
+
+    .maps-link {
+      flex: 0 0 auto;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.65rem;
+      padding: 0.8rem 1.15rem;
+      color: #0a0a0a;
+      background: #d4af37;
+      border: 1px solid #e8c84a;
+      border-radius: 6px;
+      font-family: Arial, sans-serif;
+      font-size: 0.78rem;
+      font-weight: 700;
+      text-decoration: none;
+      transition: transform 0.25s ease, box-shadow 0.25s ease, background 0.25s ease;
+    }
+
+    .maps-link:hover {
+      transform: translateY(-2px);
+      background: #e8c84a;
+      box-shadow: 0 10px 28px rgba(212, 175, 55, 0.22);
+    }
+
+    .google-g {
+      width: 14.25px;
+      height: 19px;
+      object-fit: contain;
+    }
+
+    .map-frame {
+      display: block;
+      width: 100%;
+      height: 290px;
+      border: 0;
+      border-top: 1px solid rgba(212, 175, 55, 0.16);
+      filter: saturate(0.72) contrast(1.04);
+    }
+
+    .section-divider {
+      width: 60px;
+      height: 2px;
+      background: #d4af37;
+      margin: 2rem 0;
+      opacity: 0.3;
+    }
+
+    /* ========== CALENDAR STYLES ========== */
+    .calendar-container {
+      background: rgba(255, 255, 255, 0.03);
+      border-radius: 12px;
+      padding: 2rem;
+      border: 1px solid rgba(212, 175, 55, 0.1);
+      margin-top: 1rem;
+    }
+
+    .calendar-header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 2rem;
+      padding-bottom: 1rem;
+      border-bottom: 1px solid rgba(212, 175, 55, 0.1);
+    }
+
+    .calendar-header h3 {
+      color: #d4af37;
+      font-weight: 300;
+      letter-spacing: 2px;
+      font-size: 1.4rem;
+    }
+
+    .calendar-nav {
+      display: flex;
+      gap: 1rem;
+    }
+
+    .calendar-nav button {
+      background: rgba(212, 175, 55, 0.1);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      color: #d4af37;
+      padding: 0.4rem 1rem;
+      border-radius: 4px;
+      cursor: pointer;
+      transition: all 0.3s;
+      font-size: 0.9rem;
+    }
+
+    .calendar-nav button:hover {
+      background: rgba(212, 175, 55, 0.2);
+      border-color: #d4af37;
+    }
+
+    .calendar-grid {
+      display: grid;
+      grid-template-columns: repeat(7, 1fr);
+      gap: 4px;
+    }
+
+    .calendar-grid .day-name {
+      color: rgba(255, 255, 255, 0.3);
+      font-size: 0.7rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      padding: 0.5rem;
+      text-align: center;
+      font-weight: 600;
+    }
+
+    .calendar-grid .day {
+      padding: 0.8rem 0.3rem;
+      text-align: center;
+      border-radius: 6px;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: rgba(255, 255, 255, 0.6);
+      font-size: 0.9rem;
+      border: 1px solid transparent;
+    }
+
+    .calendar-grid .day:hover {
+      background: rgba(212, 175, 55, 0.1);
+      border-color: rgba(212, 175, 55, 0.2);
+      color: #fff;
+    }
+
+    .calendar-grid .day.today {
+      background: rgba(212, 175, 55, 0.15);
+      border-color: #d4af37;
+      color: #d4af37;
+    }
+
+    .calendar-grid .day.selected {
+      background: #d4af37;
+      color: #0a0a0a;
+      font-weight: 600;
+    }
+
+    .calendar-grid .day.other-month {
+      color: rgba(255, 255, 255, 0.15);
+    }
+
+    .calendar-grid .day.has-events {
+      position: relative;
+    }
+
+    .calendar-grid .day.has-events::after {
+      content: '';
+      position: absolute;
+      bottom: 4px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 4px;
+      height: 4px;
+      border-radius: 50%;
+      background: #d4af37;
+    }
+
+    .time-slots {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(212, 175, 55, 0.1);
+    }
+
+    .time-slots h4 {
+      color: rgba(255, 255, 255, 0.7);
+      font-weight: 300;
+      letter-spacing: 2px;
+      font-size: 0.9rem;
+      margin-bottom: 1rem;
+    }
+
+    .time-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(100px, 1fr));
+      gap: 0.5rem;
+    }
+
+    .time-slot {
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.08);
+      padding: 0.6rem 0.8rem;
+      border-radius: 4px;
+      text-align: center;
+      cursor: pointer;
+      transition: all 0.3s;
+      color: rgba(255, 255, 255, 0.5);
+      font-size: 0.8rem;
+    }
+
+    .time-slot:hover {
+      background: rgba(212, 175, 55, 0.1);
+      border-color: rgba(212, 175, 55, 0.3);
+      color: #fff;
+    }
+
+    .time-slot.booked {
+      background: rgba(255, 0, 0, 0.1);
+      border-color: rgba(255, 0, 0, 0.2);
+      color: rgba(255, 0, 0, 0.3);
+      cursor: not-allowed;
+      opacity: 0.5;
+    }
+
+    .time-slot.selected {
+      background: #d4af37;
+      border-color: #d4af37;
+      color: #0a0a0a;
+    }
+
+    .booking-form {
+      margin-top: 2rem;
+      padding-top: 1.5rem;
+      border-top: 1px solid rgba(212, 175, 55, 0.1);
+      display: none;
+    }
+
+    .booking-form.active {
+      display: block;
+      animation: fadeInUp 0.5s ease;
+    }
+
+    .booking-form input,
+    .booking-form textarea {
+      width: 100%;
+      padding: 0.8rem;
+      margin-bottom: 1rem;
+      background: rgba(255, 255, 255, 0.05);
+      border: 1px solid rgba(255, 255, 255, 0.1);
+      border-radius: 4px;
+      color: #fff;
+      font-family: inherit;
+      font-size: 0.9rem;
+      transition: border-color 0.3s;
+    }
+
+    .booking-form input:focus,
+    .booking-form textarea:focus {
+      outline: none;
+      border-color: #d4af37;
+    }
+
+    .booking-form input::placeholder,
+    .booking-form textarea::placeholder {
+      color: rgba(255, 255, 255, 0.3);
+    }
+
+    .booking-form textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .booking-form .form-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+    }
+
+    .btn-book {
+      background: #d4af37;
+      color: #0a0a0a;
+      border: none;
+      padding: 0.8rem 2rem;
+      border-radius: 4px;
+      font-size: 0.9rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.3s;
+      letter-spacing: 1px;
+      text-transform: uppercase;
+    }
+
+    .btn-book:hover {
+      background: #e8c84a;
+      transform: translateY(-2px);
+      box-shadow: 0 8px 25px rgba(212, 175, 55, 0.2);
+    }
+
+    .btn-book:disabled {
+      opacity: 0.3;
+      cursor: not-allowed;
+      transform: none;
+    }
+
+    .booking-confirmation {
+      margin-top: 1.5rem;
+      padding: 1.5rem;
+      background: rgba(212, 175, 55, 0.08);
+      border: 1px solid rgba(212, 175, 55, 0.2);
+      border-radius: 4px;
+      display: none;
+      color: rgba(255, 255, 255, 0.7);
+    }
+
+    .booking-confirmation.active {
+      display: block;
+      animation: fadeInUp 0.5s ease;
+    }
+
+    .booking-confirmation strong {
+      color: #d4af37;
+    }
+
+    .form-error { color: #ff8b8b; margin-top: 0.8rem; min-height: 1.2rem; }
+
+    @media (max-width: 768px) {
+      .calendar-grid .day {
+        padding: 0.4rem 0.1rem;
+        font-size: 0.7rem;
+      }
+      
+      .time-grid {
+        grid-template-columns: repeat(auto-fill, minmax(80px, 1fr));
+      }
+      
+      .booking-form .form-row {
+        grid-template-columns: 1fr;
+      }
+      
+      .calendar-container {
+        padding: 1rem;
+      }
+
+      .location-info {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 1.3rem;
+      }
+
+      .maps-link {
+        justify-content: center;
+        width: 100%;
+      }
+
+      .map-frame {
+        height: 240px;
+      }
+    }
+
+    /* ---------- RESPONSIVE ---------- */
+    @media (max-width: 768px) {
+      .content-overlay {
+        padding: 1.2rem 1.5rem;
+      }
+
+      .nav-links {
+        display: none;
+      }
+
+      .story-sections {
+        left: 5%;
+        bottom: 15%;
+        max-width: 280px;
+      }
+
+      .story-item h2 {
+        font-size: 1.5rem;
+      }
+
+      .scroll-indicator {
+        display: none;
+      }
+
+      .hero-center h1 {
+        letter-spacing: 4px;
+      }
+
+      .bottom-bar {
+        flex-direction: column;
+        align-items: flex-start;
+        gap: 0.3rem;
+      }
+
+      .content-sections {
+        padding: 2rem 1.5rem;
+        margin-top: 100vh;
+      }
+
+      .section {
+        padding: 2rem 1rem;
+        padding-left: 1.5rem;
+        margin-bottom: 4rem;
+      }
+
+      .section h2 {
+        font-size: 2rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero-center .subtitle-top {
+        font-size: 0.6rem;
+        letter-spacing: 4px;
+      }
+      .hero-center h1 {
+        font-size: 2.8rem;
+      }
+      .story-item p {
+        font-size: 0.8rem;
+      }
+      .section h2 {
+        font-size: 1.6rem;
+      }
+    }
+  </style>
+</head>
+<body>
+
+  <!-- 3D CANVAS -->
+  <canvas id="three-canvas"></canvas>
+
+  <!-- SCROLL SPACER (gives scroll height) -->
+  <div class="scroll-spacer"></div>
+
+  <!-- OVERLAY CONTENT -->
+  <div class="content-overlay">
+
+    <!-- TOP BAR -->
+    <div class="top-bar">
+      <div class="logo"><span>⚖</span> Өмгөөллийн <span>Сентрал Консалтинг</span></div>
+      <div style="display: flex; align-items: center; gap: 1.5rem;">
+        <ul class="nav-links">
+          <li onclick="document.getElementById('section-practice').scrollIntoView({behavior: 'smooth'})">Үйл ажиллагаа</li>
+          <li onclick="document.getElementById('section-attorneys').scrollIntoView({behavior: 'smooth'})">Өмгөөлөгчид</li>
+          <li onclick="document.getElementById('section-insights').scrollIntoView({behavior: 'smooth'})">Цаг авах</li>
+          <li onclick="document.getElementById('section-contact').scrollIntoView({behavior: 'smooth'})">Холбоо барих</li>
+        </ul>
+      </div>
+    </div>
+
+    <!-- HERO CENTER -->
+    <div class="hero-center" id="heroCenter">
+      <div class="subtitle-top">Байгуулагдсан 2018 · Дэлхийд</div>
+      <h1>Өмгөөллийн <em>Сентрал</em> Консалтинг</h1>
+      <div class="tagline">Шударга. Нарийвчлал. Хүч.</div>
+      <div class="model-title">3D зураг: Шударга ёсны бэлгэ тэмдэг</div>
+      <div class="divider"></div>
+    </div>
+
+    <!-- STORY SECTIONS -->
+    <div class="story-sections" id="storySections">
+      <div class="story-item" data-index="0">
+        <div class="label">01 · Үндэс</div>
+        <h2>Шударга ёсны шинэ тодорхойлолт</h2>
+        <p>Тууштай хамгаалалт, үнэмлэхүй төлөөлөл</p>
+      </div>
+      <div class="story-item" data-index="1">
+        <div class="label">02 · Стандарт</div>
+        <h2>Элит төлөөлөл</h2>
+        <p>Бүх хэрэгт үл бууж өгөх шилдэг төлөөлөл.</p>
+      </div>
+      <div class="story-item" data-index="2">
+        <div class="label">03 · Хамрах хүрээ</div>
+        <h2>Олон улсын практикт нийцсэн стандарт</h2>
+        <p>Олон улсын туршлага, дотоодын нарийвчлал.</p>
+      </div>
+    </div>
+
+    <!-- SCROLL INDICATOR -->
+    <div class="scroll-indicator" id="scrollIndicator">Гүйлгэх</div>
+
+    <!-- BOTTOM BAR -->
+    <div class="bottom-bar" id="bottomBar">
+      <span>© 2018 Сентрал Консалтинг · <span class="gold">Бүх эрх хуулиар хамгаалагдсан</span></span>
+      <span>⚖ <span class="gold">Хууль ба Дэг журам</span></span>
+    </div>
+  </div>
+
+  <!-- ========== CONTENT SECTIONS ========== -->
+  <div class="content-sections">
+    
+    <div id="section-practice" class="section">
+      <div class="section-number">01 · Үйл ажиллагаа</div>
+      <h2>Үйл ажиллагааны <span class="gold">чиглэл</span></h2>
+      <div class="section-divider"></div>
+      <div class="content-placeholder">
+        <span class="highlight">Өмгөөллийн өмгөөлөл</span>  хууль зүйн зөвлөгөө, мэдээлэл өгөх. Иргэн, хуулийн этгээдэд шүүхэд захиргаа иргэн эрүүгийн чиглэлээр төлөөлөх.
+      </div>
+    </div>
+
+    <div id="section-attorneys" class="section">
+      <div class="section-number">02 · Өмгөөлөгчид</div>
+      <h2>Манай <span class="gold">өмгөөлөгчид</span></h2>
+      <div class="section-divider"></div>
+      <div class="content-placeholder">
+        <span class="highlight">Ганбаатарын</span> Хандмаа
+      </div>
+    </div>
+
+    <div id="section-insights" class="section">
+      <div class="section-number">03 · Цаг авах</div>
+      <h2>Цаг авах ба <span class="gold">Хуанли</span></h2>
+      <div class="section-divider"></div>
+      
+      <!-- SMART CALENDAR -->
+      <div class="calendar-container" id="calendar">
+        <div class="calendar-header">
+          <h3 id="currentMonth">2026 оны 7 сар</h3>
+          <div class="calendar-nav">
+            <button onclick="changeMonth(-1)">‹</button>
+            <button onclick="changeMonth(1)">›</button>
+          </div>
+        </div>
+        
+        <div class="calendar-grid" id="calendarGrid">
+          <!-- Days will be rendered by JavaScript -->
+        </div>
+        
+        <div class="time-slots" id="timeSlots">
+          <h4>Боломжтой цагууд</h4>
+          <div class="time-grid" id="timeGrid">
+            <!-- Time slots will be rendered by JavaScript -->
+          </div>
+        </div>
+        
+        <div class="booking-form" id="bookingForm">
+          <h4 style="color: rgba(255,255,255,0.7); font-weight: 300; letter-spacing: 2px; font-size: 0.9rem; margin-bottom: 1rem;">Таны мэдээлэл</h4>
+          <div class="form-row">
+            <input type="text" id="clientName" placeholder="Таны нэр" />
+            <input type="email" id="clientEmail" placeholder="И-мэйл хаяг" />
+          </div>
+          <input type="tel" id="clientPhone" placeholder="Утасны дугаар" />
+          <textarea id="clientMessage" placeholder="Нэмэлт мэдээлэл (заавал биш)"></textarea>
+          <button class="btn-book" id="bookButton" onclick="bookAppointment()">Цаг захиалах</button>
+          <p class="form-error" id="bookingError"></p>
+        </div>
+
+        <div class="booking-confirmation" id="bookingConfirmation">
+          <p>✅ <strong>Цаг амжилттай захиалагдлаа!</strong></p>
+          <p id="bookingDetails" style="margin-top: 0.5rem; font-size: 0.9rem;"></p>
+        </div>
+      </div>
+    </div>
+
+    <div id="section-contact" class="section">
+      <div class="section-number">04 · Холбоо барих</div>
+      <h2>Бидэнтэй <span class="gold">холбогдох</span></h2>
+      <div class="section-divider"></div>
+      <div class="content-placeholder">
+        <span class="highlight">7012</span> 0002
+      </div>
+      <div class="location-card" style="margin-top: 1.25rem;">
+        <div class="location-info">
+          <div class="location-copy">
+            <img class="map-pin" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png" alt="Google Maps" width="36" height="48" />
+            <div>
+              <div class="location-label">Манай байршил</div>
+              <p class="location-address">Бага тойруу 37, SBD - 6 khoroo, Ulaanbaatar 14200, Mongolia</p>
+            </div>
+          </div>
+          <a class="maps-link" href="https://www.google.com/maps/place/%D3%A8%D0%BC%D0%B3%D3%A9%D3%A9%D0%BB%D0%BB%D0%B8%D0%B9%D0%BD+%D0%A1%D0%B5%D0%BD%D1%82%D1%80%D0%B0%D0%BB+%D0%9A%D0%BE%D0%BD%D1%81%D0%B0%D0%BB%D1%82%D0%B8%D0%BD%D0%B3/@47.9256638,106.9170811,17z/data=!3m1!4b1!4m6!3m5!1s0x5d96930008b998ef:0x94b34d4bb840a077!8m2!3d47.9256602!4d106.919656!16s%2Fg%2F11nqxwz9_7?entry=ttu&amp;g_ep=EgoyMDI2MTAwNy4wIKXMDSoASAFQAw%3D%3D" target="_blank" rel="noopener noreferrer" aria-label="Өмгөөллийн Сентрал Консалтингийг Google Maps дээр харах">
+            <img class="google-g" src="https://www.gstatic.com/images/branding/product/2x/maps_96in128dp.png" alt="" width="14" height="19" />
+            Google Maps дээр харах
+          </a>
+        </div>
+        <iframe class="map-frame" title="Өмгөөллийн Сентрал Консалтингийн байршил" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://www.google.com/maps?q=47.9256602,106.919656&amp;z=17&amp;output=embed"></iframe>
+      </div>
+    </div>
+
+  </div>
+
+  <!-- ========== THREE.JS ========== -->
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://unpkg.com/three@0.126.0/build/three.module.js",
+        "three/addons/": "https://unpkg.com/three@0.126.0/examples/jsm/"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+    // --- CANVAS ---
+    const canvas = document.getElementById('three-canvas');
+
+    // --- SCENE ---
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x0a0a0a);
+    scene.fog = new THREE.Fog(0x0a0a0a, 5, 18);
+
+    // --- CAMERA ---
+    const camera = new THREE.PerspectiveCamera(
+      42,
+      window.innerWidth / window.innerHeight,
+      0.01,
+      10000
+    );
+    camera.position.set(1.0, 0.8, 4.8);
+
+    // --- RENDERER ---
+    const renderer = new THREE.WebGLRenderer({
+      canvas,
+      antialias: true,
+      alpha: false
+    });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+    renderer.toneMapping = THREE.ACESFilmicToneMapping;
+    renderer.toneMappingExposure = 1.2;
+
+    // --- LIGHTS ---
+    const ambient = new THREE.AmbientLight(0x222233, 0.8);
+    scene.add(ambient);
+
+    const keyLight = new THREE.DirectionalLight(0xffd9a0, 3.0);
+    keyLight.position.set(4, 6, 5);
+    scene.add(keyLight);
+
+    const fillLight = new THREE.DirectionalLight(0xccaaff, 0.8);
+    fillLight.position.set(-4, 2, -3);
+    scene.add(fillLight);
+
+    const rimLight = new THREE.DirectionalLight(0xd4af37, 1.2);
+    rimLight.position.set(-2, 1, -5);
+    scene.add(rimLight);
+
+    const backLight = new THREE.DirectionalLight(0x446688, 0.5);
+    backLight.position.set(0, 0, -6);
+    scene.add(backLight);
+
+    // --- MODEL ---
+    const loader = new GLTFLoader();
+    let model = null;
+    let initialModelY = 0;
+
+    loader.load(
+      './model/lady-justice-with-scales-and-sword.glb',
+      (gltf) => {
+        model = gltf.scene;
+        scene.add(model);
+
+        const box = new THREE.Box3().setFromObject(model);
+        const center = box.getCenter(new THREE.Vector3());
+        model.position.sub(center);
+
+        const size = box.getSize(new THREE.Vector3());
+        const baseScale = 2.2 / Math.max(size.x, size.y, size.z);
+        const finalScale = baseScale * 3.0;
+        model.scale.setScalar(finalScale);
+
+        model.position.x += 2.4;
+        model.position.y -= 1.6;
+        model.position.z += 0.2;
+        
+        initialModelY = model.position.y;
+        model.rotation.y = 0.3;
+
+        console.log('✅ Lady Justice loaded');
+      },
+      undefined,
+      (error) => {
+        console.error('❌ Model error:', error);
+        const geo = new THREE.BoxGeometry(0.6, 1.2, 0.5);
+        const mat = new THREE.MeshStandardMaterial({ color: 0xd4af37, emissive: 0x221100 });
+        const fallback = new THREE.Mesh(geo, mat);
+        fallback.position.set(2.4, -1.6, 0.2);
+        scene.add(fallback);
+        model = fallback;
+        initialModelY = -1.6;
+      }
+    );
+
+    // --- SCROLL ---
+    let scrollY = 0;
+    let smoothRot = 0;
+    let smoothModelY = 0;
+
+    window.addEventListener('scroll', () => {
+      scrollY = window.scrollY;
+    }, { passive: true });
+
+    // --- DOM refs ---
+    const storyItems = document.querySelectorAll('.story-item');
+    const heroCenter = document.getElementById('heroCenter');
+    const storySections = document.getElementById('storySections');
+    const scrollIndicator = document.getElementById('scrollIndicator');
+    const bottomBar = document.getElementById('bottomBar');
+
+    // --- ANIMATION LOOP ---
+    function animate() {
+      requestAnimationFrame(animate);
+
+      const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+      const progress = maxScroll > 0 ? scrollY / maxScroll : 0;
+
+      // 1. Model rotation
+      const targetRot = progress * Math.PI * 1.8;
+      smoothRot += (targetRot - smoothRot) * 0.045;
+      
+      // 2. Model Y position - moves upward
+      const targetModelY = initialModelY + (progress * 3.6);
+      smoothModelY += (targetModelY - smoothModelY) * 0.04;
+      
+      if (model) {
+        model.rotation.y = smoothRot;
+        model.rotation.x = Math.sin(Date.now() * 0.00025) * 0.02;
+        model.position.y = smoothModelY;
+      }
+
+      // 3. Camera subtle movement
+      const targetCamY = 0.8 - progress * 0.6;
+      const targetCamX = 1.0 + progress * 0.3;
+      const targetCamZ = 4.8 - progress * 0.8;
+
+      camera.position.x += (targetCamX - camera.position.x) * 0.02;
+      camera.position.y += (targetCamY - camera.position.y) * 0.02;
+      camera.position.z += (targetCamZ - camera.position.z) * 0.02;
+
+      const lookTargetY = -0.4 + progress * 0.8;
+      const lookTarget = new THREE.Vector3(1.6, lookTargetY, 0.2);
+      camera.lookAt(lookTarget);
+
+      // 4. Hero fade - fades out completely by 10%
+      if (progress > 0.10) {
+        heroCenter.classList.add('fade-out');
+      } else {
+        heroCenter.classList.remove('fade-out');
+      }
+
+      // 5. Story sections appear ONE BY ONE with MUCH LATER timing
+      const storyProgress = progress;
+      
+      storyItems.forEach((item, i) => {
+        const startThreshold = 0.25 + (i * 0.13);
+        
+        let visible = false;
+        if (storyProgress > startThreshold && storyProgress < 0.70) {
+          const fadeProgress = Math.min((storyProgress - startThreshold) / 0.08, 1);
+          visible = true;
+          item.style.opacity = fadeProgress;
+          item.style.transform = `translateY(${30 - (fadeProgress * 30)}px)`;
+        } else if (storyProgress >= 0.70) {
+          item.style.opacity = '0';
+          item.style.transform = 'translateY(30px)';
+          item.classList.remove('visible');
+        } else {
+          item.style.opacity = '0';
+          item.style.transform = 'translateY(30px)';
+        }
+        
+        if (visible) {
+          item.classList.add('visible');
+        }
+      });
+
+      // 6. Fade OUT story sections at 70%
+      if (progress > 0.70) {
+        storySections.classList.add('fade-out');
+        scrollIndicator.classList.add('fade-out');
+        bottomBar.style.opacity = '0';
+      } else {
+        storySections.classList.remove('fade-out');
+        scrollIndicator.classList.remove('fade-out');
+        bottomBar.style.opacity = '1';
+      }
+
+      renderer.render(scene, camera);
+    }
+
+    animate();
+
+    // --- RESIZE ---
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+
+    console.log('🏛️ Fixed: Story sections appear much later, hero fades first');
+  </script>
+
+  <!-- ========== CALENDAR JAVASCRIPT ========== -->
+  <script>
+    // Live Server previews the page without requiring the booking backend.
+    const isStaticPreview = location.protocol === 'file:' ||
+      (['localhost', '127.0.0.1', '[::1]'].includes(location.hostname) && location.port !== '4000');
+    const bookingApiBase = isStaticPreview ? 'http://localhost:4000' : '';
+
+    // --- Calendar State ---
+    let currentDate = new Date();
+    let currentMonth = currentDate.getMonth();
+    let currentYear = currentDate.getFullYear();
+    let selectedDate = null;
+    let selectedTime = null;
+    let bookedSlots = {};
+    let availabilityState = "idle";
+    let availabilityRequest = 0;
+
+    // --- Helper Functions ---
+    function getDaysInMonth(month, year) {
+      return new Date(year, month + 1, 0).getDate();
+    }
+
+    function getFirstDayOfMonth(month, year) {
+      return new Date(year, month, 1).getDay();
+    }
+
+    function formatDate(date) {
+      const year = date.getFullYear();
+      const month = String(date.getMonth() + 1).padStart(2, '0');
+      const day = String(date.getDate()).padStart(2, '0');
+      return `${year}-${month}-${day}`;
+    }
+
+    function isToday(date) {
+      const today = new Date();
+      return date.getDate() === today.getDate() &&
+             date.getMonth() === today.getMonth() &&
+             date.getFullYear() === today.getFullYear();
+    }
+
+    function isDateInPast(date) {
+      const today = new Date();
+      today.setHours(0, 0, 0, 0);
+      return date < today;
+    }
+
+    function getBookedSlots(dateStr) {
+      return bookedSlots[dateStr] || [];
+    }
+
+    // --- Render Calendar ---
+    function renderCalendar() {
+      const grid = document.getElementById('calendarGrid');
+      const monthNames = ['1 сар', '2 сар', '3 сар', '4 сар', '5 сар', '6 сар', 
+                          '7 сар', '8 сар', '9 сар', '10 сар', '11 сар', '12 сар'];
+      
+      document.getElementById('currentMonth').textContent = 
+        `${currentYear} оны ${monthNames[currentMonth]}`;
+
+      const firstDay = getFirstDayOfMonth(currentMonth, currentYear);
+      const daysInMonth = getDaysInMonth(currentMonth, currentYear);
+      const daysInPrevMonth = getDaysInMonth(currentMonth - 1, currentYear);
+
+      let html = '';
+      
+      // Day names
+      const dayNames = ['Ня', 'Да', 'Мя', 'Лх', 'Пү', 'Ба', 'Бя'];
+      dayNames.forEach(name => {
+        html += `<div class="day-name">${name}</div>`;
+      });
+
+      // Previous month days
+      for (let i = firstDay - 1; i >= 0; i--) {
+        const day = daysInPrevMonth - i;
+        const date = new Date(currentYear, currentMonth - 1, day);
+        html += `<div class="day other-month">${day}</div>`;
+      }
+
+      // Current month days
+      for (let day = 1; day <= daysInMonth; day++) {
+        const date = new Date(currentYear, currentMonth, day);
+        const dateStr = formatDate(date);
+        const isPast = isDateInPast(date);
+        const today = isToday(date);
+        const booked = getBookedSlots(dateStr).length > 0;
+        const selected = selectedDate === dateStr;
+        
+        let classes = 'day';
+        if (today) classes += ' today';
+        if (selected) classes += ' selected';
+        if (booked) classes += ' has-events';
+        if (isPast) classes += ' other-month';
+        
+        html += `<div class="${classes}" onclick="selectDate('${dateStr}')">${day}</div>`;
+      }
+
+      // Next month days
+      const totalCells = firstDay + daysInMonth;
+      const remainingCells = (7 - (totalCells % 7)) % 7;
+      for (let day = 1; day <= remainingCells; day++) {
+        html += `<div class="day other-month">${day}</div>`;
+      }
+
+      grid.innerHTML = html;
+
+      // If a date is selected, render time slots
+      if (selectedDate) {
+        renderTimeSlots(selectedDate);
+      } else {
+        document.getElementById('timeGrid').innerHTML = '<p style="color: rgba(255,255,255,0.3); padding: 1rem;">Өдөр сонгоно уу</p>';
+        document.getElementById('bookingForm').classList.remove('active');
+      }
+    }
+
+    // --- Select Date ---
+    async function selectDate(dateStr) {
+      const dateParts = dateStr.split('-');
+      const date = new Date(parseInt(dateParts[0]), parseInt(dateParts[1]) - 1, parseInt(dateParts[2]));
+      
+      if (isDateInPast(date)) {
+        alert('Өнгөрсөн өдрийг сонгох боломжгүй');
+        return;
+      }
+
+      selectedDate = dateStr;
+      selectedTime = null;
+      availabilityState = 'loading';
+      const requestId = ++availabilityRequest;
+      document.getElementById('bookingError').textContent = '';
+      document.getElementById('bookingForm').classList.remove('active');
+      document.getElementById('bookingConfirmation').classList.remove('active');
+      renderCalendar();
+      try {
+        const response = await fetch(`${bookingApiBase}/api/availability?date=${encodeURIComponent(dateStr)}`);
+        if (!response.ok) throw new Error();
+        const data = await response.json();
+        if (!Array.isArray(data.bookedTimes) || !data.bookedTimes.every(time => typeof time === 'string')) throw new Error();
+        if (requestId !== availabilityRequest) return;
+        bookedSlots[dateStr] = data.bookedTimes;
+        availabilityState = 'ready';
+      } catch {
+        if (requestId !== availabilityRequest) return;
+        availabilityState = 'error';
+      }
+      renderCalendar();
+    }
+
+    // --- Render Time Slots ---
+    function renderTimeSlots(dateStr) {
+      const timeGrid = document.getElementById('timeGrid');
+      if (availabilityState !== 'ready') {
+        timeGrid.innerHTML = availabilityState === 'error'
+          ? '<p role="alert">Сул цагийн мэдээлэл авч чадсангүй. Өдрөө дахин сонгож оролдоно уу.</p>'
+          : '<p role="status">Сул цагийг шалгаж байна…</p>';
+        return;
+      }
+      const booked = getBookedSlots(dateStr);
+      
+      // Generate time slots from 9:00 to 17:00
+      const slots = [];
+      for (let hour = 9; hour <= 17; hour++) {
+        for (let min = 0; min < 60; min += 30) {
+          if (hour === 17 && min === 30) break;
+          const timeStr = `${String(hour).padStart(2, '0')}:${String(min).padStart(2, '0')}`;
+          slots.push(timeStr);
+        }
+      }
+
+      let html = '';
+      slots.forEach(time => {
+        const isBooked = booked.includes(time) || new Date(`${dateStr}T${time}:00+08:00`) <= new Date();
+        const isSelected = selectedTime === time;
+        let classes = 'time-slot';
+        if (isBooked) classes += ' booked';
+        if (isSelected) classes += ' selected';
+        
+        html += `<div class="${classes}" onclick="${isBooked ? '' : `selectTime('${time}')`}">
+          ${time}
+        </div>`;
+      });
+
+      timeGrid.innerHTML = html;
+      
+      if (selectedTime) {
+        document.getElementById('bookingForm').classList.add('active');
+      }
+    }
+
+    // --- Select Time ---
+    function selectTime(time) {
+      if (!selectedDate || availabilityState !== 'ready' || getBookedSlots(selectedDate).includes(time) ||
+          new Date(`${selectedDate}T${time}:00+08:00`) <= new Date()) return;
+      selectedTime = time;
+      renderTimeSlots(selectedDate);
+      document.getElementById('bookingForm').classList.add('active');
+      document.getElementById('bookingConfirmation').classList.remove('active');
+    }
+
+    // --- Change Month ---
+    function changeMonth(delta) {
+      availabilityRequest++;
+      availabilityState = "idle";
+      currentMonth += delta;
+      if (currentMonth > 11) {
+        currentMonth = 0;
+        currentYear++;
+      } else if (currentMonth < 0) {
+        currentMonth = 11;
+        currentYear--;
+      }
+      selectedDate = null;
+      selectedTime = null;
+      renderCalendar();
+    }
+
+    // --- Book Appointment ---
+    async function bookAppointment() {
+      if (!selectedDate || !selectedTime || availabilityState !== 'ready' ||
+          getBookedSlots(selectedDate).includes(selectedTime) ||
+          new Date(`${selectedDate}T${selectedTime}:00+08:00`) <= new Date()) return;
+      if (document.getElementById('bookButton').disabled) return;
+      const name = document.getElementById('clientName').value.trim();
+      const email = document.getElementById('clientEmail').value.trim();
+      const phone = document.getElementById('clientPhone').value.trim();
+      
+      if (!name || !email || !phone) {
+        alert('Та бүх мэдээллээ бөглөнө үү');
+        return;
+      }
+
+      if (!selectedDate || !selectedTime) {
+        alert('Та огноо болон цагаа сонгоно уу');
+        return;
+      }
+
+      const bookingInfo = {
+        date: selectedDate,
+        time: selectedTime,
+        clientName: name,
+        email: email,
+        phone: phone,
+        message: document.getElementById('clientMessage').value.trim()
+      };
+
+      const button = document.getElementById('bookButton');
+      const errorBox = document.getElementById('bookingError');
+      button.disabled = true;
+      errorBox.textContent = '';
+
+      try {
+        const response = await fetch(`${bookingApiBase}/api/bookings`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(bookingInfo),
+        });
+        const data = await response.json();
+        if (!response.ok) {
+          if (response.status === 409) {
+            await selectDate(bookingInfo.date);
+            document.getElementById('bookingForm').classList.add('active');
+          }
+          throw new Error(data.error || 'Цаг захиалж чадсангүй.');
+        }
+        document.getElementById('bookingDetails').textContent =
+          `${bookingInfo.date} өдөр ${bookingInfo.time} цагт (Улаанбаатарын цагаар), ${bookingInfo.clientName} нэрээр цаг баталгаажлаа.`;
+        document.getElementById('bookingConfirmation').classList.add('active');
+        bookedSlots[bookingInfo.date] = [...(bookedSlots[bookingInfo.date] || []), bookingInfo.time];
+        selectedTime = null;
+        document.getElementById('bookingForm').classList.remove('active');
+        renderCalendar();
+      } catch (error) {
+        errorBox.textContent = error.message;
+      } finally {
+        button.disabled = false;
+      }
+    }
+
+    // --- Init Calendar ---
+    renderCalendar();
+  </script>
+
+</body>
+</html>
